@@ -38,7 +38,7 @@ const EmployerDashboard = ({ contract, account, provider }) => {
             id: i,
             title: job.title,
             description: job.description,
-            salary: job.salary ? job.salary.toString() : "0", // Adăugat verificare
+            salary: job.salary ? job.salary.toString() : "0", 
             acceptedApplicants: Array.from(acceptedApplicants),
           });
         }
