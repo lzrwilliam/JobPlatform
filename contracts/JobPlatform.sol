@@ -278,10 +278,19 @@ function addEmployer(address employer) public onlyAdmin {
   }
 
   
-  function getJob(uint256 jobId) public view jobExists(jobId) returns (string memory title,string memory description,uint256 salary,address employer, address[] memory applicants){
-    Job memory job = jobs[jobId];
+function getJob(uint256 jobId) external view jobExists(jobId) 
+    returns (
+        string memory title, 
+        string memory description, 
+        uint256 salary, 
+        address employer, 
+        address[] memory applicants
+    ) 
+{
+    Job storage job = jobs[jobId];
     return (job.title, job.description, job.salary, job.employer, job.applicants);
-  }
+}
+
 
 
     receive() external payable {
