@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\lazar\\Desktop\\Proiect blockchain\\back job\\back job\\Proiect\\contracts\\JobPlatform.sol": {
-      "lastModificationDate": 1736345617608,
-      "contentHash": "f6740f0a798c7918561b6f5c48822f28",
+      "lastModificationDate": 1736348293243,
+      "contentHash": "2a8d8d51c42bd166840054f889042e56",
       "sourceName": "contracts/JobPlatform.sol",
       "solcConfig": {
         "version": "0.8.27",

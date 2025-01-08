@@ -153,6 +153,7 @@ const App = () => {
 
     const handleAccountsChanged = async (accounts) => {
       if (accounts.length > 0) {
+        
         await initializeContracts(accounts[0]);
         localStorage.setItem("connectedAccount", accounts[0]);  
       } else {
@@ -165,12 +166,19 @@ const App = () => {
     };
   
     const disconnectWallet = () => {
+     
       setAccount(null);
       setContract(null);
       setIsEmployer(false);
+      setNotifications([]); 
+
       localStorage.removeItem("connectedAccount");
     };
   
+
+   
+    
+   
     const connectWallet = async () => {
       if (typeof window.ethereum !== "undefined") {
         try {
@@ -228,7 +236,8 @@ const App = () => {
         initializeContracts(savedAccount); 
       }
     }, []);
-    
+   
+
     useEffect(() => {
       const init = async () => {
         
