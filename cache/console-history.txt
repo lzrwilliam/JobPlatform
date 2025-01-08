@@ -1,0 +1,6 @@
+await jobPlatform.getJobEmployer(0);
+await jobPlatform.getJobEmployer(1);
+await jobPlatform.getJobCount();
+await jobPlatform.postJob("Test", "Test Description", ethers.parseEther("1"));
+await jobPlatform.addEmployer("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+const jobPlatform = await ethers.getContractAt("JobPlatform", "0x5fbdb2315678afecb367f032d93f642f64180aa3");
