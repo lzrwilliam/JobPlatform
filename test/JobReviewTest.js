@@ -8,16 +8,13 @@ describe("JobPlatform & Review Contracts", function () {
 
   before(async function () {
     [owner, addr1, addr2, addr3] = await ethers.getSigners();
-    // owner va fi "admin" în JobPlatform
   });
 
   beforeEach(async function () {
-    // 1) Deploy JobPlatform
     JobPlatform = await ethers.getContractFactory("JobPlatform");
     jobPlatform = await JobPlatform.deploy();
     await jobPlatform.waitForDeployment();
 
-    // 2) Deploy Review, cu adresa jobPlatform
     Review = await ethers.getContractFactory("Review");
     review = await Review.deploy(jobPlatform.getAddress());
     await review.waitForDeployment();
@@ -30,7 +27,6 @@ describe("JobPlatform & Review Contracts", function () {
     });
 
     it("Should allow admin to add an employer", async function () {
-      // addEmployer trebuie chemat de admin (owner)
       await jobPlatform.addEmployer(addr1.address);
       const isEmp = await jobPlatform.isEmployer(addr1.address);
       expect(isEmp).to.be.true;
@@ -43,17 +39,14 @@ describe("JobPlatform & Review Contracts", function () {
       ).to.be.revertedWith("Employer is already validated");
   });
     it("Should fail if non-admin tries to add an employer", async function () {
-      // apelăm addEmployer cu alt cont (addr1), ar trebui să dea revert
       await expect(
         jobPlatform.connect(addr1).addEmployer(addr2.address)
       ).to.be.revertedWith("Caller is not the admin");
     });
 
     it("Should allow an employer to post a job", async function () {
-      // Mai întâi îl facem employer
       await jobPlatform.addEmployer(addr1.address);
 
-      // Apoi, postăm job-ul cu addr1
       const tx = await jobPlatform
         .connect(addr1)
         .postJob("Frontend Dev", "React developer", ethers.parseEther("2"));
@@ -62,7 +55,6 @@ describe("JobPlatform & Review Contracts", function () {
       const jobCount = await jobPlatform.getJobCount();
       expect(jobCount).to.equal(1);
 
-      // Verificăm datele job-ului
       const jobData = await jobPlatform.getJob(0);
       expect(jobData.title).to.equal("Frontend Dev");
       expect(jobData.employer).to.equal(addr1.address);
@@ -70,26 +62,21 @@ describe("JobPlatform & Review Contracts", function () {
     });
 
     it("Should let a normal user register automatically", async function () {
-      // În cod: "registerUser()" -> if (!isUserRegistered[msg.sender]) ...
       await jobPlatform.connect(addr2).registerUser();
       const isReg = await jobPlatform.isRegistered(addr2.address);
       expect(isReg).to.be.true;
     });
 
     it("Should let a normal user apply for job if valid", async function () {
-      // 1) Facem un employer
       await jobPlatform.addEmployer(addr1.address);
 
-      // 2) Employerul postează job-ul
       await jobPlatform
         .connect(addr1)
         .postJob("Backend Dev", "NodeJS developer", ethers.parseEther("3"));
 
-      // jobId = 0
-      // 3) addr2 se înregistrează mai întâi (opțional, nu-i musai dacă n-ai require)
+     
       await jobPlatform.connect(addr2).registerUser();
 
-      // 4) addr2 aplică la job cu 0.01 ETH
       const jobId = 0;
       await expect(
         jobPlatform.connect(addr2).applyForJob(jobId, {
@@ -98,13 +85,9 @@ describe("JobPlatform & Review Contracts", function () {
       ).to.emit(jobPlatform, "JobApplied")
         .withArgs(jobId, addr2.address);
 
-      // Verificăm că fee-ul a fost transferat la employer
-      // => Nu e simplu de verificat direct, dar putem verifica balanțele
-      // De exemplu:
+   
       const oldBalance = await ethers.provider.getBalance(addr1.address);
-      // facem alt job & app pt a produce o dif, sau preluăm direct 
-      // – e tricky fiindcă e gas cost, dar ar trebui să crească un pic 
-      // Aici, ne mulțumim doar cu succesul evenimentului si zero revert
+     
     });
 
     it("Should fail if user tries to apply with not enough ETH", async function () {
@@ -118,7 +101,6 @@ describe("JobPlatform & Review Contracts", function () {
     });
 
     it("Should allow employer to approve a request", async function () {
-      // create employer + job
       await jobPlatform.addEmployer(addr1.address);
       await jobPlatform
         .connect(addr1)
@@ -180,9 +162,7 @@ describe("JobPlatform & Review Contracts", function () {
           .connect(addr1)
           .postJob("Any Title", "Any Description", ethers.parseEther("1"));
       
-        // 3) Fără ca nimeni să fi aplicat, addr1 încearcă să lase un review pentru addr2
-        //   => Nu există nicio relație (addr2 nu e aplicant), deci ar trebui revert cu
-        //      "No valid employment relationship found".
+      
         await expect(
           review.connect(addr1).leaveReview(0, addr2.address, 4, "Ok job")
         ).to.be.revertedWith("No valid employment relationship found");

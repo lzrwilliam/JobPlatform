@@ -1,7 +1,6 @@
 const fs = require('fs');
 
 async function main() {
-  // Obține fabrica de contracte pentru JobPlatform
 
 
   const [deployer] = await ethers.getSigners();

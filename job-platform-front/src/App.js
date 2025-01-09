@@ -262,7 +262,6 @@ const App = () => {
           {isEmployer && <Link to="/add-job">Add Job</Link>}
           <Link to="/add-employer">Add Employer</Link>
           <Link to="/see-reviews">See Reviews</Link>
-          <Link to="/transactions">Transactions</Link>
           {isEmployer && <Link to="/requests">Requests</Link>}
           {isEmployer && <Link to="/employer-dashboard">Employer Dashboard</Link>}
         </div>
@@ -370,15 +369,7 @@ const App = () => {
       //</ProtectedRoute>
     }
   />
-  <Route
-    path="/transactions"
-    element={
-      <ProtectedRoute account={account}>
-  
-    <Transactions  account={account}    contract={contract} provider={provider}  />
-      </ProtectedRoute>
-    }
-  />
+
   
   
   
