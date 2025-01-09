@@ -36,6 +36,12 @@ describe("JobPlatform & Review Contracts", function () {
       expect(isEmp).to.be.true;
     });
 
+    it("Should not allow duplicate employers", async function () {
+      await jobPlatform.addEmployer(addr1.address);
+      await expect(
+          jobPlatform.addEmployer(addr1.address)
+      ).to.be.revertedWith("Employer is already validated");
+  });
     it("Should fail if non-admin tries to add an employer", async function () {
       // apelăm addEmployer cu alt cont (addr1), ar trebui să dea revert
       await expect(
@@ -124,7 +130,8 @@ describe("JobPlatform & Review Contracts", function () {
       });
 
       // now employer can approve
-      await jobPlatform.connect(addr1).approveRequest(0, addr2.address);
+      const requestId = 1; 
+      await jobPlatform.connect(addr1).approveRequest(0, addr2.address,requestId);
 
       // check in the employerRequests array
       const [jobIds, applicants, approved, rejected] = await jobPlatform.getRequests(addr1.address);
@@ -152,8 +159,9 @@ describe("JobPlatform & Review Contracts", function () {
       // 2) Employer (addr1) lasă review la adresa lui addr2
       // => jobId = 0, reviewee = addr2
       await expect(review.connect(addr1).leaveReview(0, addr2.address, 5, "Great work!"))
-        .to.emit(review, "ReviewSubmitted")
-        .withArgs(addr1.address, addr2.address, 5, "Great work!");
+      .to.emit(review, "ReviewSubmitted")
+      .withArgs(addr1.address, addr2.address, 5, "Great work!", 0);
+  
 
       // verificăm stocarea
       const r = await review.getReview(addr1.address, addr2.address);
@@ -209,4 +217,81 @@ describe("JobPlatform & Review Contracts", function () {
       ).to.be.revertedWith("Comments cannot be empty");
     });
   });
+
+  it("Should allow employer to reject a request", async function () {
+    await jobPlatform.addEmployer(addr1.address);
+    await jobPlatform.connect(addr1).postJob("Tester", "QA Testing", ethers.parseEther("1"));
+    await jobPlatform.connect(addr2).applyForJob(0, { value: ethers.parseEther("0.01") });
+
+    const requestId = 1; 
+    await jobPlatform.connect(addr1).rejectRequest(0, addr2.address, requestId);
+
+    const [jobIds, applicants, approved, rejected] = await jobPlatform.getRequests(addr1.address);
+    expect(rejected[0]).to.be.true;
+    expect(approved[0]).to.be.false;
+});
+
+it("Should allow employer to fire an employee", async function () {
+    await jobPlatform.addEmployer(addr1.address);
+    await jobPlatform.connect(addr1).postJob("Blockchain Dev", "Smart Contract Developer", ethers.parseEther("2"));
+    await jobPlatform.connect(addr2).applyForJob(0, { value: ethers.parseEther("0.01") });
+
+    const requestId = 1; 
+    await jobPlatform.connect(addr1).approveRequest(0, addr2.address, requestId);
+
+    await jobPlatform.connect(addr1).fireEmployee(0, addr2.address);
+
+    const isFired = await jobPlatform.isFired(0, addr2.address);
+    expect(isFired).to.be.true;
+});
+
+it("Should allow employer to pay an accepted employee", async function () {
+  await jobPlatform.addEmployer(addr1.address);
+  await jobPlatform.connect(addr1).postJob("Full Stack Dev", "Web Developer", ethers.parseEther("3"));
+  await jobPlatform.connect(addr2).applyForJob(0, { value: ethers.parseEther("0.01") });
+
+  const requestId = 1; 
+  await jobPlatform.connect(addr1).approveRequest(0, addr2.address, requestId);
+
+  const initialBalance = await ethers.provider.getBalance(addr2.address);
+
+  await jobPlatform.connect(addr1).payEmployee(0, addr2.address, { value: ethers.parseEther("3") });
+
+  const finalBalance = await ethers.provider.getBalance(addr2.address);
+
+  expect(finalBalance).to.be.above(initialBalance);
+});
+
+it("Should not allow an employer to fire a non-accepted employee", async function () {
+    await jobPlatform.addEmployer(addr1.address);
+    await jobPlatform.connect(addr1).postJob("UI Designer", "UI/UX Developer", ethers.parseEther("1"));
+    
+    await expect(
+        jobPlatform.connect(addr1).fireEmployee(0, addr2.address)
+    ).to.be.revertedWith("Employee was not accepted for this job.");
+});
+
+it("Should not allow employer to pay a fired employee", async function () {
+  await jobPlatform.addEmployer(addr1.address);
+  await jobPlatform.connect(addr1).postJob("UI Designer", "Figma Expert", ethers.parseEther("2"));
+  await jobPlatform.connect(addr2).applyForJob(0, { value: ethers.parseEther("0.01") });
+  await jobPlatform.connect(addr1).approveRequest(0, addr2.address, 1);
+  await jobPlatform.connect(addr1).fireEmployee(0, addr2.address);
+
+  await expect(
+      jobPlatform.connect(addr1).payEmployee(0, addr2.address, { value: ethers.parseEther("2") })
+  ).to.be.revertedWith("Employee was not accepted for this job.");
+});
+
+it("Should not allow payment with incorrect salary", async function () {
+  await jobPlatform.addEmployer(addr1.address);
+  await jobPlatform.connect(addr1).postJob("Solidity Dev", "Smart Contract Developer", ethers.parseEther("3"));
+  await jobPlatform.connect(addr2).applyForJob(0, { value: ethers.parseEther("0.01") });
+  await jobPlatform.connect(addr1).approveRequest(0, addr2.address, 1);
+
+  await expect(
+      jobPlatform.connect(addr1).payEmployee(0, addr2.address, { value: ethers.parseEther("1") })
+  ).to.be.revertedWith("Incorrect salary amount sent.");
+});
+
 });
